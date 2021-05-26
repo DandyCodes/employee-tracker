@@ -27,13 +27,14 @@ CREATE TABLE employees(
 INSERT INTO
   departments (name)
 VALUES
-  ("kitchen"),
-  ("bathroom");
+  ("sales"),
+  ("engineering"),
+  ("finance");
 INSERT INTO
   roles (title, salary, department_id)
 VALUES
   (
-    "sales",
+    "sales lead",
     60.7,
     (
       SELECT
@@ -41,14 +42,14 @@ VALUES
       FROM
         departments
       WHERE
-        name = "kitchen"
+        name = "sales"
     )
   );
 INSERT INTO
   roles (title, salary, department_id)
 VALUES
   (
-    "warehouse",
+    "sales assistant",
     62.1,
     (
       SELECT
@@ -56,29 +57,14 @@ VALUES
       FROM
         departments
       WHERE
-        name = "kitchen"
+        name = "sales"
     )
   );
 INSERT INTO
   roles (title, salary, department_id)
 VALUES
   (
-    "sales",
-    64.2,
-    (
-      SELECT
-        id
-      FROM
-        departments
-      WHERE
-        name = "bathroom"
-    )
-  );
-INSERT INTO
-  roles (title, salary, department_id)
-VALUES
-  (
-    "warehouse",
+    "lead engineer",
     65.5,
     (
       SELECT
@@ -86,7 +72,22 @@ VALUES
       FROM
         departments
       WHERE
-        name = "bathroom"
+        name = "engineering"
+    )
+  );
+INSERT INTO
+  roles (title, salary, department_id)
+VALUES
+  (
+    "accountant",
+    65.5,
+    (
+      SELECT
+        id
+      FROM
+        departments
+      WHERE
+        name = "finance"
     )
   );
 INSERT INTO
@@ -101,14 +102,14 @@ VALUES
       FROM
         roles
       WHERE
-        title = "sales"
+        title = "sales lead"
         AND department_id = (
           SELECT
             id
           FROM
             departments
           WHERE
-            name = "bathroom"
+            name = "sales"
         )
     ),
     NULL
@@ -125,14 +126,14 @@ VALUES
       FROM
         roles
       WHERE
-        title = "warehouse"
+        title = "sales assistant"
         AND department_id = (
           SELECT
             id
           FROM
             departments
           WHERE
-            name = "kitchen"
+            name = "sales"
         )
     ),
     (
@@ -150,3 +151,8 @@ VALUES
         AND last_name = "Bond"
     )
   );
+INSERT INTO
+  employees (first_name, last_name, role_id, manager_id)
+VALUES
+  ("Tony", "Martin", 3, NULL),
+  ("Martha", "Daniels", 4, 3);
