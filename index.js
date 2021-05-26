@@ -53,12 +53,6 @@ async function getAll(tableName) {
   return (await connection.query(`SELECT * FROM ${tableName}`))[0];
 }
 
-async function VIEW(tableName) {
-  const rows = await getAll(tableName);
-  console.log("\n", "\t", tableName.toUpperCase(), "\n");
-  console.table(rows);
-}
-
 function getCommaSeparatedColumnNames(columns) {
   const columnNames = [];
   for (const column of columns) {
@@ -80,6 +74,18 @@ async function getColumnValues(columns) {
     Number.isNaN(Number(value)) ? `"${value}"` : Number(value)
   );
   return values;
+}
+
+async function getEmployeeNames() {
+  return (await getAll("employees")).map(
+    employee => `${employee.first_name} ${employee.last_name}`
+  );
+}
+
+async function VIEW(tableName) {
+  const rows = await getAll(tableName);
+  console.log("\n", "\t", tableName.toUpperCase(), "\n");
+  console.table(rows);
 }
 
 async function ADD(tableName) {
@@ -107,11 +113,11 @@ async function main() {
   console.clear();
   await welcome();
 
-  const actions = ["VIEW", "ADD", "UPDATE", "DELETE", "QUIT"];
+  const actions = ["VIEW", "ADD", "UPDATE", "DELETE"];
   const tables = ["Departments", "Roles", "Employees"];
 
   while (true) {
-    const action = await choose("Select action", actions);
+    const action = await choose("Select action", actions.concat(["QUIT"]));
     if (action == "QUIT") {
       break;
     }
@@ -119,17 +125,14 @@ async function main() {
       action == "VIEW"
         ? ["Total Utilized Budget of A Department"].concat(tables)
         : action == "UPDATE"
-        ? await getAll("employees")
+        ? await getEmployeeNames()
         : tables;
-    choices.push("CANCEL");
-    const choice = await choose(action, choices);
+    const choice = await choose(action, choices.concat(["CANCEL"]));
     if (choice == "CANCEL") continue;
     await eval(action)(choice.toLowerCase());
-    console.log("\n");
     await pressEnter();
     console.log("\n");
   }
-
   connection.end();
 }
 
