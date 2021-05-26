@@ -1,36 +1,36 @@
 DROP DATABASE IF EXISTS employee_db;
 CREATE DATABASE employee_db;
 USE employee_db;
-CREATE TABLE department(
+CREATE TABLE departments(
   id INT AUTO_INCREMENT,
   name VARCHAR(30),
   PRIMARY KEY (id)
 );
-CREATE TABLE role(
+CREATE TABLE roles(
   id INT AUTO_INCREMENT,
   title VARCHAR(30),
   salary DECIMAL,
   department_id INT,
   PRIMARY KEY (id),
-  FOREIGN KEY (department_id) REFERENCES department(id)
+  FOREIGN KEY (department_id) REFERENCES departments(id)
 );
-CREATE TABLE employee(
+CREATE TABLE employees(
   id INT AUTO_INCREMENT,
   first_name VARCHAR(30),
   last_name VARCHAR(30),
   role_id INT,
   manager_id INT,
   PRIMARY KEY (id),
-  FOREIGN KEY (role_id) REFERENCES role(id),
-  FOREIGN KEY (manager_id) REFERENCES employee(id)
+  FOREIGN KEY (role_id) REFERENCES roles(id),
+  FOREIGN KEY (manager_id) REFERENCES employees(id)
 );
 INSERT INTO
-  department (name)
+  departments (name)
 VALUES
   ("kitchen"),
   ("bathroom");
 INSERT INTO
-  role (title, salary, department_id)
+  roles (title, salary, department_id)
 VALUES
   (
     "sales",
@@ -39,13 +39,13 @@ VALUES
       SELECT
         id
       FROM
-        department
+        departments
       WHERE
         name = "kitchen"
     )
   );
 INSERT INTO
-  role (title, salary, department_id)
+  roles (title, salary, department_id)
 VALUES
   (
     "warehouse",
@@ -54,13 +54,13 @@ VALUES
       SELECT
         id
       FROM
-        department
+        departments
       WHERE
         name = "kitchen"
     )
   );
 INSERT INTO
-  role (title, salary, department_id)
+  roles (title, salary, department_id)
 VALUES
   (
     "sales",
@@ -69,13 +69,13 @@ VALUES
       SELECT
         id
       FROM
-        department
+        departments
       WHERE
         name = "bathroom"
     )
   );
 INSERT INTO
-  role (title, salary, department_id)
+  roles (title, salary, department_id)
 VALUES
   (
     "warehouse",
@@ -84,13 +84,13 @@ VALUES
       SELECT
         id
       FROM
-        department
+        departments
       WHERE
         name = "bathroom"
     )
   );
 INSERT INTO
-  employee (first_name, last_name, role_id, manager_id)
+  employees (first_name, last_name, role_id, manager_id)
 VALUES
   (
     "James",
@@ -99,14 +99,14 @@ VALUES
       SELECT
         id
       FROM
-        role
+        roles
       WHERE
         title = "sales"
         AND department_id = (
           SELECT
             id
           FROM
-            department
+            departments
           WHERE
             name = "bathroom"
         )
@@ -114,7 +114,7 @@ VALUES
     NULL
   );
 INSERT INTO
-  employee (first_name, last_name, role_id, manager_id)
+  employees (first_name, last_name, role_id, manager_id)
 VALUES
   (
     "Sarah",
@@ -123,14 +123,14 @@ VALUES
       SELECT
         id
       FROM
-        role
+        roles
       WHERE
         title = "warehouse"
         AND department_id = (
           SELECT
             id
           FROM
-            department
+            departments
           WHERE
             name = "kitchen"
         )
@@ -143,8 +143,8 @@ VALUES
           SELECT
             *
           FROM
-            employee
-        ) AS employee
+            employees
+        ) AS employees
       WHERE
         first_name = "James"
         AND last_name = "Bond"
