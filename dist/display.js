@@ -1,4 +1,4 @@
-module.exports = function (rows) {
+module.exports = function (rows, tableName) {
   for (const row of rows) {
     delete row.id;
     for (const key in row) {
@@ -7,18 +7,15 @@ module.exports = function (rows) {
       delete row[key];
     }
   }
+  console.log("\n", "\t", tableName.toUpperCase(), "\n");
   console.table(rows);
 };
 
 function titleCase(originalString) {
   if (originalString === null) return "-";
   if (typeof originalString !== "string") return originalString;
-  if (originalString.endsWith("_id")) {
-    originalString = originalString.replace("_id", "");
-  }
-  originalString = originalString.replace("_", " ");
-  const words = originalString.split(" ");
   let titleCaseString = "";
+  const words = originalString.split(" ");
   for (const word of words) {
     const wordArray = word.split("");
     wordArray[0] = wordArray[0].toUpperCase();

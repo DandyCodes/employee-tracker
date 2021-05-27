@@ -1,59 +1,39 @@
 require("console.table");
+const query = require("./query");
+const pluralize = require("pluralize");
 const display = require("./display");
 
 module.exports = {
-  async viewDepartments(connection) {
-    const departments = (
-      await connection.query(`SELECT * FROM departments`)
-    )[0];
-    console.log("\n", "\t", "DEPARTMENTS", "\n");
-    display(departments);
+  config(dbConnection) {
+    query.config(dbConnection);
   },
-  async viewRoles(connection) {
-    const roles = (await connection.query(`SELECT * FROM roles`))[0];
-    for (const role of roles) {
-      const department = (
-        await connection.query(
-          `SELECT * FROM departments WHERE id=${role.department_id}`
-        )
-      )[0][0];
-      role.department_id = department.name;
-    }
-    console.log("\n", "\t", "ROLES", "\n");
-    display(roles);
-  },
-  async viewEmployees(connection) {
-    const employees = (await connection.query(`SELECT * FROM employees`))[0];
-    for (const employee of employees) {
-      const role = (
-        await connection.query(
-          `SELECT * FROM roles WHERE id=${employee.role_id}`
-        )
-      )[0][0];
-      employee.role_id = role.title;
-      if (employee.manager_id !== null) {
-        const manager = (
-          await connection.query(
-            `SELECT * FROM employees WHERE id=${employee.manager_id}`
-          )
-        )[0][0];
-        employee.manager_id = manager.first_name + " " + manager.last_name;
+  async viewAll(tableName) {
+    const rows = await query.getAll(tableName);
+    for (const row of rows) {
+      for (const key in row) {
+        if (key.endsWith("_id")) {
+          const id = row[key];
+          const niceKey = key.replace("_id", "");
+          const foreignTableName =
+            niceKey == "manager" ? "employees" : pluralize(niceKey);
+          row[niceKey] = await query.getRowNameById(foreignTableName, id);
+          delete row[key];
+        }
       }
     }
-    console.log("\n", "\t", "EMPLOYEES", "\n");
-    display(employees);
+    display(rows, tableName);
   },
-  async viewEmployeesByManager(connection) {},
-  async viewTheTotalUtilizedBudgetOfADepartment(connection) {},
-  async updateEmployeeRole(connection) {},
-  async updateEmployeeManager(connection) {},
-  async addDepartment(connection) {},
-  async addRole(connection) {},
-  async addEmployee(connection) {},
-  async deleteDepartment(connection) {},
-  async deleteRole(connection) {},
-  async deleteEmployee(connection) {},
-  async quit(_connection) {
+  async viewEmployeesByManager() {},
+  async viewTheTotalUtilizedBudgetOfADepartment() {},
+  async updateEmployeeRole() {},
+  async updateEmployeeManager() {},
+  async addDepartment() {},
+  async addRole() {},
+  async addEmployee() {},
+  async deleteDepartment() {},
+  async deleteRole() {},
+  async deleteEmployee() {},
+  async quit() {
     process.exit();
   },
 };

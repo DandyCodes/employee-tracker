@@ -12,14 +12,15 @@ async function main() {
     password: process.env.PASSWORD,
     database: "employee_db",
   });
+  action.config(connection);
   console.clear();
   await ask.welcome();
   console.log("\n");
   while (true) {
     const actions = [
-      "View departments",
-      "View roles",
-      "View employees",
+      "View all departments",
+      "View all roles",
+      "View all employees",
       "View employees by manager",
       "View the total utilized budget of a department",
       "Update employee role",
@@ -33,7 +34,12 @@ async function main() {
       "Quit",
     ];
     const choice = await ask.chooseFrom(actions, "SELECT AN ACTION");
-    await action[camelCase(choice)](connection);
+    if (choice.startsWith("View all ")) {
+      const tableName = choice.trim().split(" ").pop();
+      await action.viewAll(tableName);
+    }
+    // calls a method on the action export object
+    // await action[camelCase(choice)]();
     await ask.pressEnter();
   }
 }
