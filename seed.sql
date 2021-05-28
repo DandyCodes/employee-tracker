@@ -35,7 +35,7 @@ INSERT INTO
 VALUES
   (
     "sales lead",
-    60.7,
+    85000,
     (
       SELECT
         id
@@ -50,7 +50,7 @@ INSERT INTO
 VALUES
   (
     "sales assistant",
-    62.1,
+    75000,
     (
       SELECT
         id
@@ -65,7 +65,7 @@ INSERT INTO
 VALUES
   (
     "lead engineer",
-    65.5,
+    95000,
     (
       SELECT
         id
@@ -80,7 +80,7 @@ INSERT INTO
 VALUES
   (
     "accountant",
-    65.5,
+    85000,
     (
       SELECT
         id
@@ -156,3 +156,11 @@ INSERT INTO
 VALUES
   ("Tony", "Martin", 3, NULL),
   ("Martha", "Daniels", 4, 3);
+INSERT INTO
+  departments (name)
+VALUES
+  ("Legal");
+INSERT INTO
+  roles (title, salary, department_id)
+VALUES
+  ("Lawyer", 95000, 4);

@@ -1,4 +1,23 @@
-module.exports = function (rows, tableName) {
+const pluralize = require("pluralize");
+const query = require("./query");
+
+module.exports = async function (arrayOfRows, message) {
+  const rows = JSON.parse(JSON.stringify(arrayOfRows));
+  for (const row of rows) {
+    for (const key in row) {
+      if (key.endsWith("_id")) {
+        const id = row[key];
+        const niceKey = key.replace("_id", "");
+        const foreignTableName =
+          niceKey == "manager" ? "employees" : pluralize(niceKey);
+        row[niceKey] = await query.getNiceIdentifierFromID(
+          foreignTableName,
+          id
+        );
+        delete row[key];
+      }
+    }
+  }
   for (const row of rows) {
     delete row.id;
     for (const key in row) {
@@ -7,7 +26,7 @@ module.exports = function (rows, tableName) {
       delete row[key];
     }
   }
-  console.log("\n", "\t", tableName.toUpperCase(), "\n");
+  console.log("\n", "\t", message.toUpperCase(), "\n");
   console.table(rows);
 };
 
