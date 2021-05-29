@@ -167,5 +167,24 @@ async function viewEmployeesByManager() {
 }
 
 async function viewTheTotalUtilizedBudgetOfADepartment() {
-  console.log("budget");
+  const department = await askSelectRow("departments", `CHOOSE DEPARTMENT`);
+  const allRoles = await query.getAllRows("roles");
+  const rolesWithinDepartment = [];
+  for (const role of allRoles) {
+    if (role.department_id == department.id) {
+      rolesWithinDepartment.push(role);
+    }
+  }
+  const roleIdsWithinDepartment = rolesWithinDepartment.map(role => role.id);
+  const allEmployees = await query.getAllRows("employees");
+  let totalBudget = 0;
+  for (const employee of allEmployees) {
+    if (roleIdsWithinDepartment.includes(employee.role_id)) {
+      const employeeRole = rolesWithinDepartment.find(
+        role => role.id == employee.role_id
+      );
+      totalBudget += Number(employeeRole.salary);
+    }
+  }
+  console.log(totalBudget);
 }
