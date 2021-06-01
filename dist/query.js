@@ -46,4 +46,50 @@ module.exports = {
       )
     )[0];
   },
+  async updateRole(employee, role) {
+    return (
+      await connection.query(
+        `UPDATE employees SET role_id=${role.ID} WHERE employees.id=${employee.ID}`
+      )
+    )[0];
+  },
+  async updateManager(employee, newManager) {
+    const newManagerId = newManager.ID ? newManager.ID : null;
+    return (
+      await connection.query(
+        `UPDATE employees SET manager_id=${newManagerId} WHERE employees.id=${employee.ID}`
+      )
+    )[0];
+  },
+  async addEmployee(firstName, lastName, role, manager) {
+    const managerId = manager.ID ? manager.ID : null;
+    return (
+      await connection.query(
+        `INSERT INTO employees (first_name,last_name,role_id,manager_id) VALUES ("${firstName}","${lastName}",${role.ID},${managerId})`
+      )
+    )[0];
+  },
+  async addRole(title, salary, department) {
+    return (
+      await connection.query(
+        `INSERT INTO roles (title,salary,department_id) VALUES ("${title}",${salary},${department.ID})`
+      )
+    )[0];
+  },
+  async addDepartment(name) {
+    return (
+      await connection.query(
+        `INSERT INTO departments (name) VALUES ("${name}")`
+      )
+    )[0];
+  },
+  async removeRow(id, tableName) {
+    try {
+      return (
+        await connection.query(`DELETE FROM ${tableName} WHERE id=${id}`)
+      )[0];
+    } catch (error) {
+      return error;
+    }
+  },
 };

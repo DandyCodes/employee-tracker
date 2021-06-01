@@ -1,4 +1,15 @@
 const inquirer = require("inquirer");
+const query = require("./query");
+const queries = new Map([
+  ["employees", query.getEmployees],
+  ["roles", query.getRoles],
+  ["departments", query.getDepartments],
+]);
+const identifyingKeys = new Map([
+  ["employees", "Name"],
+  ["roles", "Role"],
+  ["departments", "Department"],
+]);
 
 module.exports = {
   async welcome() {
@@ -41,28 +52,34 @@ module.exports = {
     });
     return answer.input;
   },
-  async selectManager(managers) {
+  async selectFromEmployeeRows(employees, message) {
     const answer = await inquirer.prompt({
-      message: "SELECT MANAGER",
+      message: message,
       type: "list",
-      choices: managers.map(row => `${row.ID}|${row.Name}`),
+      choices: employees.map(row => `${row.ID}|${row.Name}`),
       name: "choice",
       loop: false,
     });
-    const manager = managers.find(e => e.ID == answer.choice.split("|")[0]);
-    return manager;
+    const employee = getChoice(answer, employees);
+    return employee;
   },
-  async selectDepartment(departments) {
+  async selectFromTable(tableName) {
+    const getQuery = queries.get(tableName);
+    const choices = await getQuery();
+    const message = `SELECT ${tableName.replace("s", "").toUpperCase()}`;
+    const identifyingKey = identifyingKeys.get(tableName);
     const answer = await inquirer.prompt({
-      message: "SELECT DEPARTMENT",
+      message: message,
       type: "list",
-      choices: departments.map(row => `${row.ID}|${row.Department}`),
+      choices: choices.map(row => `${row.ID}|${row[identifyingKey]}`),
       name: "choice",
       loop: false,
     });
-    const department = departments.find(
-      e => e.ID == answer.choice.split("|")[0]
-    );
-    return department;
+    const choice = getChoice(answer, choices);
+    return choice;
   },
 };
+
+function getChoice(answer, choices) {
+  return choices.find(e => e.ID == answer.choice.split("|")[0]);
+}

@@ -1,10 +1,10 @@
 require("console.table");
 const ask = require("./ask");
 const query = require("./query");
-const getQueries = new Map([
-  ["EMPLOYEES", query.getEmployees],
-  ["ROLES", query.getRoles],
-  ["DEPARTMENTS", query.getDepartments],
+const queries = new Map([
+  ["employees", query.getEmployees],
+  ["roles", query.getRoles],
+  ["departments", query.getDepartments],
 ]);
 
 module.exports = {
@@ -29,87 +29,36 @@ module.exports = {
     await viewAction(choice);
   },
   async update() {
-    const employee = await askSelectRow("employees", "UPDATE");
-    await display(
-      [employee],
-      `UPDATE ${employee.first_name} ${employee.last_name}`
-    );
+    const employee = await ask.selectFromTable("employees");
     const choices = ["ROLE", "MANAGER"];
-    const choice = await ask.chooseFrom(
-      choices,
-      `UPDATE ${employee.first_name} ${employee.last_name}`
-    );
-    const tableName = choice == "MANAGER" ? "employees" : "roles";
-    const chosenRow = await askSelectRow(tableName, `CHOOSE ${choice}`);
-    if (choice === "MANAGER" && chosenRow && chosenRow.id === employee.id) {
-      console.log("Cannot select self");
-      return;
-    }
-    const columnName = `${choice.toLowerCase()}_id`;
-    await getQueries.updateColumnValue(
-      "employees",
-      columnName,
-      chosenRow ? chosenRow.id : null,
-      employee.id
-    );
-    const updatedEmployee = await getQueries.getRowById(
-      "employees",
-      employee.id
-    );
-    await display([updatedEmployee], "employees");
+    const choice = await ask.chooseFrom(choices, `UPDATE ${employee.Name}`);
+    const updateAction = choice == "ROLE" ? updateRole : updateManager;
+    await updateAction(employee);
   },
   async add() {
-    const choices = getQueries.concat().map(choice => choice.toUpperCase());
-    const choice = await ask.chooseFrom(choices, `ADD`);
-    const tableName = choice.toLowerCase();
-    const allColumnNamesOfTable = await getQueries.getColumnNames(tableName);
-    const newRow = {};
-    for (const columnName of allColumnNamesOfTable) {
-      if (columnName === "role_id") {
-        const role = await askSelectRow("roles", "CHOOSE ROLE");
-        newRow[columnName] = role.id;
-        continue;
-      }
-      if (columnName === "manager_id") {
-        const manager = await askSelectRow("employees", "CHOOSE MANAGER");
-        if (manager) {
-          newRow[columnName] = manager.id;
-        }
-        continue;
-      }
-      if (columnName === "department_id") {
-        const department = await askSelectRow(
-          "departments",
-          "CHOOSE DEPARTMENT"
-        );
-        newRow[columnName] = department.id;
-        continue;
-      }
-      const input = await ask.input(`${columnName.toUpperCase()}`);
-      newRow[columnName] = input;
-    }
-    const columnsToUpdate = [];
-    const values = [];
-    for (const key in newRow) {
-      columnsToUpdate.push(key);
-      values.push(newRow[key]);
-    }
-    await getQueries.addRow(tableName, columnsToUpdate, values);
-    const rows = await getQueries.getAllRows(tableName);
-    await display(rows, tableName);
+    const choices = ["EMPLOYEE", "ROLE", "DEPEARTMENT"];
+    const choice = await ask.chooseFrom(choices, "ADD");
+    const addAction =
+      choice == "EMPLOYEE"
+        ? addEmployee
+        : choice == "ROLE"
+        ? addRole
+        : addDepartment;
+    await addAction();
   },
   async remove() {
-    const choices = getQueries.concat().map(choice => choice.toUpperCase());
-    const choice = await ask.chooseFrom(choices, `REMOVE`);
-    const tableName = choice.toLowerCase();
-    const rowToDelete = await askSelectRow(
-      tableName,
-      `REMOVE ${tableName.toUpperCase()}`
-    );
-    await getQueries.removeRowById(tableName, rowToDelete.id);
-    const rows = await getQueries.getAllRows(tableName);
-    const message = await display(rows, tableName);
-    if (message) console.log(message);
+    const choices = ["EMPLOYEE", "ROLE", "DEPARTMENT"];
+    const choice = await ask.chooseFrom(choices, "REMOVE");
+    const tableName = getTableName(choice);
+    const selectedRow = await ask.selectFromTable(tableName);
+    const errorMessage = await query.removeRow(selectedRow.ID, tableName);
+    if (errorMessage.sqlMessage) {
+      console.log(errorMessage.sqlMessage);
+    } else {
+      const getQuery = queries.get(tableName);
+      const updatedRows = await getQuery();
+      console.table(updatedRows);
+    }
   },
   async quit() {
     process.exit();
@@ -117,14 +66,15 @@ module.exports = {
 };
 
 async function viewAll(choice) {
-  const getQuery = getQueries.get(choice);
+  const tableName = getTableName(choice);
+  const getQuery = queries.get(tableName);
   const rows = await getQuery();
   console.table(rows);
 }
 
 async function viewEmployeesByManager() {
   const managers = await query.getManagers();
-  const manager = await ask.selectManager(managers);
+  const manager = await ask.selectFromEmployeeRows(managers, "SELECT MANAGER");
   console.log("\n");
   console.log("MANAGER");
   console.table([manager]);
@@ -134,8 +84,7 @@ async function viewEmployeesByManager() {
 }
 
 async function viewTheTotalUtilizedBudgetOfADepartment() {
-  const departments = await query.getDepartments();
-  const department = await ask.selectDepartment(departments);
+  const department = await ask.selectFromTable("departments");
   const employees = await query.getEmployeesByDepartment(department);
   console.table(employees);
   const totalBudget = employees.reduce(
@@ -146,4 +95,69 @@ async function viewTheTotalUtilizedBudgetOfADepartment() {
     `Total Utilized Budget of ${department.Department}:`,
     totalBudget
   );
+}
+
+async function updateRole(employee) {
+  const role = await ask.selectFromTable("roles");
+  await query.updateRole(employee, role);
+  const updatedEmployees = await query.getEmployees();
+  console.table(updatedEmployees);
+}
+
+async function updateManager(employee) {
+  const potentialManagers = (await query.getEmployees()).filter(
+    potentialManager => potentialManager.ID != employee.ID
+  );
+  potentialManagers.push({ Name: "NONE", ID: "" });
+  const newManager = await ask.selectFromEmployeeRows(
+    potentialManagers,
+    "SELECT MANAGER"
+  );
+  await query.updateManager(employee, newManager);
+  const updatedEmployees = await query.getEmployees();
+  console.table(updatedEmployees);
+}
+
+async function addEmployee() {
+  const firstName = await ask.input("First Name");
+  const lastName = await ask.input("Last Name");
+  const role = await ask.selectFromTable("roles");
+  const potentialManagers = await query.getEmployees();
+  potentialManagers.push({ Name: "NONE", ID: "" });
+  const manager = await ask.selectFromEmployeeRows(
+    potentialManagers,
+    "SELECT MANAGER"
+  );
+  await query.addEmployee(firstName, lastName, role, manager);
+  const updatedEmployees = await query.getEmployees();
+  console.table(updatedEmployees);
+}
+
+async function addRole() {
+  const title = await ask.input("Title");
+  const salary = await ask.input("Salary");
+  if (Number.isNaN(Number(salary))) {
+    console.log("Salary must be a number");
+    return;
+  }
+  const department = await ask.selectFromTable("departments");
+  await query.addRole(title, salary, department);
+  const updatedRoles = await query.getRoles();
+  console.table(updatedRoles);
+}
+
+async function addDepartment() {
+  const name = await ask.input("Name");
+  await query.addDepartment(name);
+  const updatedDepartments = await query.getDepartments();
+  console.table(updatedDepartments);
+}
+
+function getTableName(choice) {
+  choice = choice.replace("S", "");
+  return choice == "EMPLOYEE"
+    ? "employees"
+    : choice == "ROLE"
+    ? "roles"
+    : "departments";
 }

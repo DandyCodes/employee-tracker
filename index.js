@@ -2,7 +2,7 @@ require("dotenv").config();
 const db = require("mysql2/promise");
 const ask = require("./dist/ask");
 const action = require("./dist/action");
-const actions = new Map([
+const userActions = new Map([
   ["VIEW", action.view],
   ["UPDATE", action.update],
   ["ADD", action.add],
@@ -24,8 +24,8 @@ async function main() {
   while (true) {
     const choices = ["VIEW", "UPDATE", "ADD", "REMOVE", "QUIT"];
     const choice = await ask.chooseFrom(choices, "SELECT AN ACTION");
-    const actionMethod = actions.get(choice);
-    await actionMethod();
+    const userAction = userActions.get(choice);
+    await userAction();
     await ask.pressEnter();
   }
 }
