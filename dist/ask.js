@@ -41,4 +41,28 @@ module.exports = {
     });
     return answer.input;
   },
+  async selectManager(managers) {
+    const answer = await inquirer.prompt({
+      message: "SELECT MANAGER",
+      type: "list",
+      choices: managers.map(row => `${row.ID}|${row.Name}`),
+      name: "choice",
+      loop: false,
+    });
+    const manager = managers.find(e => e.ID == answer.choice.split("|")[0]);
+    return manager;
+  },
+  async selectDepartment(departments) {
+    const answer = await inquirer.prompt({
+      message: "SELECT DEPARTMENT",
+      type: "list",
+      choices: departments.map(row => `${row.ID}|${row.Department}`),
+      name: "choice",
+      loop: false,
+    });
+    const department = departments.find(
+      e => e.ID == answer.choice.split("|")[0]
+    );
+    return department;
+  },
 };
