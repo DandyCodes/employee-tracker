@@ -15,7 +15,7 @@ async function main() {
     host: process.env.HOST,
     user: process.env.USER_NAME,
     password: process.env.PASSWORD,
-    database: "employee_db",
+    database: process.env.DATABASE_NAME,
   });
   await action.config(connection);
   console.clear();
